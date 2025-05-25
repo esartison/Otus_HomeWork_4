@@ -743,8 +743,66 @@ WantedBy=multi-user.target
 >patronictl -c /etc/patroni/patroni.yml list
 ![image](https://github.com/user-attachments/assets/5923d840-1974-4c39-adba-7216bb25c29e)
 
-Для failover:
-patronictl -c /etc/patroni/patroni.yml failover
+## (2.4) установка\настройка PgBouncer
+pgnode[1-3]: Устанавка PGBouncer
+>apt -y install pgbouncer
+
+
+pgnode[1-3]:Подготовка конфига  /etc/pgbouncer/pgbouncer.ini
+```
+root@pgnode3:/tmp# cat  /etc/pgbouncer/pgbouncer.ini
+[databases]
+postgres = host=127.0.0.1 port=5432 dbname=postgres
+* = host=127.0.0.1 port=5432
+
+[pgbouncer]
+logfile = /var/log/postgresql/pgbouncer.log
+pidfile = /var/run/postgresql/pgbouncer.pid
+listen_addr = *
+listen_port = 6432
+unix_socket_dir = /var/run/postgresql
+auth_type = md5
+#auth_type = trust
+auth_file = /etc/pgbouncer/userlist.txt
+auth_user = postgres
+auth_query = SELECT usename, passwd FROM pg_shadow WHERE usename=$1
+#admin_users = pgbouncer, postgres
+admin_users = postgres
+ignore_startup_parameters = extra_float_digits,geqo,search_path
+
+pool_mode = session
+#pool_mode = transaction
+server_reset_query = DISCARD ALL
+max_client_conn = 10000
+#default_pool_size = 20
+reserve_pool_size = 1
+reserve_pool_timeout = 1
+max_db_connections = 1000
+#max_client_conn = 900
+default_pool_size = 500
+pkt_buf = 8192
+listen_backlog = 4096
+log_connections = 1
+log_disconnections = 1
+```
+
+Создание userlist.txt со списком пользователей для работы через PGBouncer:
+```
+root@pgnode3:/tmp# cat /etc/pgbouncer/userlist.txt
+"postgres" "postgres"
+"pgbouncer" "pgbouncer"
+"replicator" "replicator"
+```
+
+Перезапуск PGBouncer
+>systemctl restart pgbouncer
+![image](https://github.com/user-attachments/assets/b8f50046-d4ea-4982-8cb7-1dc754da908b)
+
+
+Проверка подключенич к Postgres через PGBouncer (порт 6432):
+>psql -p 6432 -h 127.0.0.1 -U postgres postgres
+![image](https://github.com/user-attachments/assets/eaeb4bbf-e302-4104-a933-87d828375a87)
+
 
 
 ## (3) Настройте HAProxy для балансировки нагрузки.
