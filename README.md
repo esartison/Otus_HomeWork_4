@@ -37,6 +37,7 @@ IP адреса для созданных VM
 
 ## (2) Разверните HA-кластер PostgreSQL с использованием Patroni.
 
+## (2.1) установка\настройка Postgres
 pgnode[1-3]:регистраация репозитория postgresql.org
 >sudo apt install -y postgresql-common
 >sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
@@ -44,7 +45,6 @@ pgnode[1-3]:регистраация репозитория postgresql.org
 pgnode[1-3]:установка Postgres 17
 >sudo
 >apt install postgresql-17
-
 
 pgnode1:смена пароля для схемы postgres и создание пользователей postgres и pgbouncer 
 
@@ -58,6 +58,29 @@ pgnode[1-3]: правка pg_hba.conf и postgresql.conf, чтобы разре�
 ![image](https://github.com/user-attachments/assets/8c17094f-5994-4fa4-877f-6387d7432e61)
 ![image](https://github.com/user-attachments/assets/5ccbba28-b840-4339-90d0-e4192ad4e83d)
 >esartison@pgnode3:~$ sudo systemctl restart postgresql
+
+pgnode[2,3]: удаление содержимое каталога pgdata на репликах
+>systemctl stop postgresql
+>rm -rf /var/lib/postgresql/17/main/*
+
+
+## (2.2) установка\настройка ETCD
+
+pgnode[1-3]:Установка дистрибутива из под ROOT-а
+>cd /tmp && wget https://github.com/etcd-io/etcd/releases/download/v3.5.5/etcd-v3.5.5-linux-amd64.tar.gz && tar xzvf etcd-v3.5.5-linux-amd64.tar.gz
+>sudo mv /tmp/etcd-v3.5.5-linux-amd64/etcd* /usr/local/bin/
+
+
+
+Создаем пользователя, от которого будет работать служба etcd:
+sudo groupadd --system etcd
+sudo useradd -s /sbin/nologin --system -g etcd etcd
+Создаем каталоги etcd, меняем владельца и права:
+mkdir /opt/etcd
+mkdir /etc/etcd
+mkdir /var/lib/etcd
+chown -R etcd:etcd /opt/etcd /var/lib/etcd /etc/etcd
+chmod -R 700 /opt/etcd/ /var/lib/etcd /etc/etcd
 
 
 ## (3) Настройте HAProxy для балансировки нагрузки.
