@@ -47,6 +47,12 @@ pgnode[1-3]:установка Postgres 17
 
 
 pgnode1:смена пароля для схемы postgres и создание пользователей postgres и pgbouncer 
+psql
+\password --- выставляем пароль postgres
+
+>create user replicator replication login encrypted password 'password';
+
+>create user pgbouncer login encrypted password 'password';
 
 
 
