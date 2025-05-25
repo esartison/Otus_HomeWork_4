@@ -55,7 +55,8 @@ pgnode1:смена пароля для схемы postgres и создание �
 >create user pgbouncer login encrypted password 'pgbouncer';
 
 pgnode[1-3]: правка pg_hba.conf и postgresql.conf, чтобы разрешить удаленные подключения 
-![image](https://github.com/user-attachments/assets/8c17094f-5994-4fa4-877f-6387d7432e61)
+![image](https://github.com/user-attachments/assets/03d24782-7b94-41d3-8e5d-cf09ab68977e)
+
 ![image](https://github.com/user-attachments/assets/5ccbba28-b840-4339-90d0-e4192ad4e83d)
 >esartison@pgnode3:~$ sudo systemctl restart postgresql
 
@@ -191,6 +192,7 @@ WantedBy=multi-user.target
 
 pgnode[1-3]: Устанавка Python пакетов
 sudo apt -y install python3 python3-pip python3-dev python3-psycopg2 libpq-dev
+sudo apt install patroni
 pip3 install psycopg2 --break-system-packages
 pip3 install psycopg2-binary --break-system-packages
 pip3 install patroni --break-system-packages
@@ -199,19 +201,482 @@ pip3 install python-etcd --break-system-packages
 pgnode1: Создание конфига Patroni /etc/patroni/patroni.yml
 >mkdir /etc/patroni/
 ```
+root@pgnode1:/tmp# cat /etc/patroni/patroni.yml
+scope: postgres-cluster
+name: pgnode1
+namespace: /service/
 
+restapi:
+  listen: 192.168.0.24:8008 # разное значение на всех узлах
+  connect_address: 192.168.0.24:8008 # разное значение на всех узлах
+  authentication:
+    username: patroni
+    password: 'password'
+
+etcd:
+  hosts: 192.168.0.24:2379, 192.168.0.25:2379, 192.168.0.26:2379
+
+bootstrap:
+  method: initdb
+  dcs:
+    ttl: 60
+    loop_wait: 10
+    retry_timeout: 27
+    maximum_lag_on_failover: 2048576
+    master_start_timeout: 300
+    synchronous_mode: true
+    synchronous_mode_strict: false
+    synchronous_node_count: 1
+    # standby_cluster:
+      # host: 127.0.0.1
+      # port: 1111
+      # primary_slot_name: patroni
+    postgresql:
+      use_pg_rewind: false
+      use_slots: true
+      parameters:
+        max_connections: 800
+        superuser_reserved_connections: 5
+        max_locks_per_transaction: 64
+        max_prepared_transactions: 0
+        huge_pages: try
+        shared_buffers: 512MB
+        work_mem: 128MB
+        maintenance_work_mem: 256MB
+        effective_cache_size: 4GB
+        checkpoint_timeout: 15min
+        checkpoint_completion_target: 0.9
+        min_wal_size: 2GB
+        max_wal_size: 4GB
+        wal_buffers: 32MB
+        default_statistics_target: 1000
+        seq_page_cost: 1
+        random_page_cost: 4
+        effective_io_concurrency: 2
+        synchronous_commit: on
+        autovacuum: on
+        autovacuum_max_workers: 5
+        autovacuum_vacuum_scale_factor: 0.01
+        autovacuum_analyze_scale_factor: 0.02
+        autovacuum_vacuum_cost_limit: 200
+        autovacuum_vacuum_cost_delay: 20
+        autovacuum_naptime: 1s
+        max_files_per_process: 4096
+        archive_mode: on
+        archive_timeout: 1800s
+        archive_command: cd .
+        wal_level: replica
+        wal_keep_segments: 130
+        max_wal_senders: 10
+        max_replication_slots: 10
+        hot_standby: on
+        hot_standby_feedback: True
+        wal_log_hints: on
+        shared_preload_libraries: pg_stat_statements,auto_explain
+        pg_stat_statements.max: 10000
+        pg_stat_statements.track: all
+        pg_stat_statements.save: off
+        auto_explain.log_min_duration: 10s
+        auto_explain.log_analyze: true
+        auto_explain.log_buffers: true
+        auto_explain.log_timing: false
+        auto_explain.log_triggers: true
+        auto_explain.log_verbose: true
+        auto_explain.log_nested_statements: true
+        track_io_timing: on
+        log_lock_waits: on
+        log_temp_files: 0
+        track_activities: on
+        track_counts: on
+        track_functions: all
+        log_checkpoints: on
+        logging_collector: on
+        log_statement: mod
+        log_truncate_on_rotation: on
+        log_rotation_age: 1d
+        log_rotation_size: 0
+        log_line_prefix: '%m [%p] %q%u@%d '
+        log_filename: 'postgresql-%a.log'
+        log_directory: /var/log/postgresql
+
+  initdb:  # List options to be passed on to initdb
+    - encoding: UTF8
+    - locale: en_US.UTF-8
+    - data-checksums
+
+  pg_hba:  # должен содержать адреса ВСЕХ машин, используемых в кластере
+    - host all all 0.0.0.0/0 scram-sha-256
+    - host replication replicator scram-sha-256
+
+postgresql:
+  listen: 192.168.0.24,127.0.0.1:5432 # разное значение на всех узлах
+  connect_address: 192.168.0.24:5432 # разное значение на всех узлах
+  use_unix_socket: true
+  data_dir: /var/lib/postgresql/17/main
+  bin_dir: /usr/lib/postgresql/17/bin
+  config_dir: /etc/postgresql/17/main
+  pgpass: /var/lib/postgresql/.pgpass_patroni
+  authentication:
+    replication:
+      username: replicator
+      password: replicator
+    superuser:
+      username: postgres
+      password: postgres
+  parameters:
+    unix_socket_directories: /var/run/postgresql
+    stats_temp_directory: /var/lib/pgsql_stats_tmp
+
+  remove_data_directory_on_rewind_failure: false
+  remove_data_directory_on_diverged_timelines: false
+
+#  callbacks:
+#    on_start:
+#    on_stop:
+#    on_restart:
+#    on_reload:
+#    on_role_change:
+
+  create_replica_methods:
+    - basebackup
+  basebackup:
+    max-rate: '100M'
+    checkpoint: 'fast'
+
+watchdog:
+  mode: off  # Allowed values: off, automatic, required
+  device: /dev/watchdog
+  safety_margin: 5
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false
+  nosync: false
+
+  # specify a node to replicate from (cascading replication)
+#  replicatefrom: (node name)
 ```
 
 pgnode2: Создание конфига Patroni /etc/patroni/patroni.yml
 >mkdir /etc/patroni/
 ```
+postgres@pgnode2:~$ cat /etc/patroni/patroni.yml
+scope: postgres-cluster # одинаковое значение на всех узлах
+name: pgnode2 # разное значение на всех узлах
+namespace: /service/ # одинаковое значение на всех узлах
+
+restapi:
+  listen: 192.168.0.25:8008 # разное значение на всех узлах
+  connect_address: 192.168.0.25:8008 # разное значение на всех узлах
+  authentication:
+    username: patroni
+    password: 'password'
+
+etcd:
+  hosts: 192.168.0.24:2379, 192.168.0.25:2379, 192.168.0.26:2379 # список всех узлов, на которых установлен etcd
+
+bootstrap:
+  method: initdb
+  dcs:
+    ttl: 60
+    loop_wait: 10
+    retry_timeout: 27
+    maximum_lag_on_failover: 2048576
+    master_start_timeout: 300
+    synchronous_mode: true
+    synchronous_mode_strict: false
+    synchronous_node_count: 1
+    # standby_cluster:
+      # host: 127.0.0.1
+      # port: 1111
+      # primary_slot_name: patroni
+    postgresql:
+      use_pg_rewind: false
+      use_slots: true
+      parameters:
+        max_connections: 800
+        superuser_reserved_connections: 5
+        max_locks_per_transaction: 64
+        max_prepared_transactions: 0
+        huge_pages: try
+        shared_buffers: 512MB
+        work_mem: 128MB
+        maintenance_work_mem: 256MB
+        effective_cache_size: 4GB
+        checkpoint_timeout: 15min
+        checkpoint_completion_target: 0.9
+        min_wal_size: 2GB
+        max_wal_size: 4GB
+        wal_buffers: 32MB
+        default_statistics_target: 1000
+        seq_page_cost: 1
+        random_page_cost: 4
+        effective_io_concurrency: 2
+        synchronous_commit: on
+        autovacuum: on
+        autovacuum_max_workers: 5
+        autovacuum_vacuum_scale_factor: 0.01
+        autovacuum_analyze_scale_factor: 0.02
+        autovacuum_vacuum_cost_limit: 200
+        autovacuum_vacuum_cost_delay: 20
+        autovacuum_naptime: 1s
+        max_files_per_process: 4096
+        archive_mode: on
+        archive_timeout: 1800s
+        archive_command: cd .
+        wal_level: replica
+        wal_keep_segments: 130
+        max_wal_senders: 10
+        max_replication_slots: 10
+        hot_standby: on
+        hot_standby_feedback: True
+        wal_log_hints: on
+        shared_preload_libraries: pg_stat_statements,auto_explain
+        pg_stat_statements.max: 10000
+        pg_stat_statements.track: all
+        pg_stat_statements.save: off
+        auto_explain.log_min_duration: 10s
+        auto_explain.log_analyze: true
+        auto_explain.log_buffers: true
+        auto_explain.log_timing: false
+        auto_explain.log_triggers: true
+        auto_explain.log_verbose: true
+        auto_explain.log_nested_statements: true
+        track_io_timing: on
+        log_lock_waits: on
+        log_temp_files: 0
+        track_activities: on
+        track_counts: on
+        track_functions: all
+        log_checkpoints: on
+        logging_collector: on
+        log_statement: mod
+        log_truncate_on_rotation: on
+        log_rotation_age: 1d
+        log_rotation_size: 0
+        log_line_prefix: '%m [%p] %q%u@%d '
+        log_filename: 'postgresql-%a.log'
+        log_directory: /var/log/postgresql
+
+  initdb:  # List options to be passed on to initdb
+    - encoding: UTF8
+    - locale: en_US.UTF-8
+    - data-checksums
+
+  pg_hba:  # должен содержать адреса ВСЕХ машин, используемых в кластере
+    - host all all 0.0.0.0/0 scram-sha-256
+    - host replication replicator scram-sha-256
+
+postgresql:
+  listen: 192.168.0.25,127.0.0.1:5432 # разное значение на всех узлах
+  connect_address: 192.168.0.25:5432 # разное значение на всех узлах
+  use_unix_socket: true
+  data_dir: /var/lib/postgresql/17/main
+  bin_dir: /usr/lib/postgresql/17/bin
+  config_dir: /etc/postgresql/17/main
+  pgpass: /var/lib/postgresql/.pgpass_patroni
+  authentication:
+    replication:
+      username: replicator
+      password: password
+    superuser:
+      username: postgres
+      password: password
+  parameters:
+    unix_socket_directories: /var/run/postgresql
+    stats_temp_directory: /var/lib/pgsql_stats_tmp
+
+  remove_data_directory_on_rewind_failure: false
+  remove_data_directory_on_diverged_timelines: false
+
+#  callbacks:
+#    on_start:
+#    on_stop:
+#    on_restart:
+#    on_reload:
+#    on_role_change:
+
+  create_replica_methods:
+    - basebackup
+  basebackup:
+    max-rate: '100M'
+    checkpoint: 'fast'
+
+watchdog:
+  mode: off  # Allowed values: off, automatic, required
+  device: /dev/watchdog
+  safety_margin: 5
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false
+  nosync: false
+
+  # specify a node to replicate from (cascading replication)
+#  replicatefrom: (node name)
 
 ```
 
 pgnode3: Создание конфига Patroni /etc/patroni/patroni.yml
 >mkdir /etc/patroni/
 ```
+postgres@pgnode3:~$  cat /etc/patroni/patroni.yml
+scope: postgres-cluster # одинаковое значение на всех узлах
+name: pgnode3 # разное значение на всех узлах
+namespace: /service/ # одинаковое значение на всех узлах
 
+restapi:
+  listen: 192.168.0.26:8008 # разное значение на всех узлах
+  connect_address: 192.168.0.26:8008 # разное значение на всех узлах
+  authentication:
+    username: patroni
+    password: 'password'
+
+etcd:
+  hosts: 192.168.0.24:2379, 192.168.0.25:2379, 192.168.0.26:2379 # список всех узлов, на которых установлен etcd
+
+bootstrap:
+  method: initdb
+  dcs:
+    ttl: 60
+    loop_wait: 10
+    retry_timeout: 27
+    maximum_lag_on_failover: 2048576
+    master_start_timeout: 300
+    synchronous_mode: true
+    synchronous_mode_strict: false
+    synchronous_node_count: 1
+    # standby_cluster:
+      # host: 127.0.0.1
+      # port: 1111
+      # primary_slot_name: patroni
+    postgresql:
+      use_pg_rewind: false
+      use_slots: true
+      parameters:
+        max_connections: 800
+        superuser_reserved_connections: 5
+        max_locks_per_transaction: 64
+        max_prepared_transactions: 0
+        huge_pages: try
+        shared_buffers: 512MB
+        work_mem: 128MB
+        maintenance_work_mem: 256MB
+        effective_cache_size: 4GB
+        checkpoint_timeout: 15min
+        checkpoint_completion_target: 0.9
+        min_wal_size: 2GB
+        max_wal_size: 4GB
+        wal_buffers: 32MB
+        default_statistics_target: 1000
+        seq_page_cost: 1
+        random_page_cost: 4
+        effective_io_concurrency: 2
+        synchronous_commit: on
+        autovacuum: on
+        autovacuum_max_workers: 5
+        autovacuum_vacuum_scale_factor: 0.01
+        autovacuum_analyze_scale_factor: 0.02
+        autovacuum_vacuum_cost_limit: 200
+        autovacuum_vacuum_cost_delay: 20
+        autovacuum_naptime: 1s
+        max_files_per_process: 4096
+        archive_mode: on
+        archive_timeout: 1800s
+        archive_command: cd .
+        wal_level: replica
+        wal_keep_segments: 130
+        max_wal_senders: 10
+        max_replication_slots: 10
+        hot_standby: on
+        hot_standby_feedback: True
+        wal_log_hints: on
+        shared_preload_libraries: pg_stat_statements,auto_explain
+        pg_stat_statements.max: 10000
+        pg_stat_statements.track: all
+        pg_stat_statements.save: off
+        auto_explain.log_min_duration: 10s
+        auto_explain.log_analyze: true
+        auto_explain.log_buffers: true
+        auto_explain.log_timing: false
+        auto_explain.log_triggers: true
+        auto_explain.log_verbose: true
+        auto_explain.log_nested_statements: true
+        track_io_timing: on
+        log_lock_waits: on
+        log_temp_files: 0
+        track_activities: on
+        track_counts: on
+        track_functions: all
+        log_checkpoints: on
+        logging_collector: on
+        log_statement: mod
+        log_truncate_on_rotation: on
+        log_rotation_age: 1d
+        log_rotation_size: 0
+        log_line_prefix: '%m [%p] %q%u@%d '
+        log_filename: 'postgresql-%a.log'
+        log_directory: /var/log/postgresql
+
+  initdb:  # List options to be passed on to initdb
+    - encoding: UTF8
+    - locale: en_US.UTF-8
+    - data-checksums
+
+  pg_hba:  # должен содержать адреса ВСЕХ машин, используемых в кластере
+    - host all all 0.0.0.0/0 scram-sha-256
+    - host replication replicator scram-sha-256
+
+postgresql:
+  listen: 192.168.0.26,127.0.0.1:5432 # разное значение на всех узлах
+  connect_address: 192.168.0.26:5432 # разное значение на всех узлах
+  use_unix_socket: true
+  data_dir: /var/lib/postgresql/17/main
+  bin_dir: /usr/lib/postgresql/17/bin
+  config_dir: /etc/postgresql/17/main
+  pgpass: /var/lib/postgresql/.pgpass_patroni
+  authentication:
+    replication:
+      username: replicator
+      password: replicator
+    superuser:
+      username: postgres
+      password: postgres
+  parameters:
+    unix_socket_directories: /var/run/postgresql
+    stats_temp_directory: /var/lib/pgsql_stats_tmp
+
+  remove_data_directory_on_rewind_failure: false
+  remove_data_directory_on_diverged_timelines: false
+
+#  callbacks:
+#    on_start:
+#    on_stop:
+#    on_restart:
+#    on_reload:
+#    on_role_change:
+
+  create_replica_methods:
+    - basebackup
+  basebackup:
+    max-rate: '100M'
+    checkpoint: 'fast'
+
+watchdog:
+  mode: off  # Allowed values: off, automatic, required
+  device: /dev/watchdog
+  safety_margin: 5
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false
+  nosync: false
+
+  # specify a node to replicate from (cascading replication)
+#  replicatefrom: (node name)
 ```
 
 pgnode[1-3]:Назначение прав каждой ноде
@@ -224,8 +689,15 @@ pgnode[1-3]:Назначение прав каждой ноде
 >chown postgres:postgres /var/lib/pgsql_stats_tmp
 
 
-Валидация установки
-sudo -u postgres patroni /etc/patroni/patroni.yml
+pgnode1:Валидация установки
+>sudo -u postgres patroni /etc/patroni/patroni.yml
+![image](https://github.com/user-attachments/assets/9a2cf49d-9175-4ff7-a92f-6dd12ce89ff6)
+
+pgnode2:Валидация установки
+![image](https://github.com/user-attachments/assets/b1ab956f-bf8f-4657-b47b-903523d91ea2)
+
+pgnode3:Валидация установки
+![image](https://github.com/user-attachments/assets/c64ade65-d4b7-438a-bcb0-57b64a37fc68)
 
 
 
