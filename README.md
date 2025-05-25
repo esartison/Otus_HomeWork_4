@@ -783,7 +783,7 @@ max_db_connections = 1000
 default_pool_size = 500
 pkt_buf = 8192
 listen_backlog = 4096
-log_connections = 1
+log_connections = 1 
 log_disconnections = 1
 ```
 
@@ -809,6 +809,54 @@ root@pgnode3:/tmp# cat /etc/pgbouncer/userlist.txt
 
 
 ## (3) Настройте HAProxy для балансировки нагрузки.
+pghaproxy1: Устанавливаем HAProxy:
+>apt -y install haproxy
+
+pghaproxy1: Создание нового файла конфигурации  /etc/haproxy/haproxy.cfg
+```
+root@pghaproxy1:/home/esartison# cat /etc/haproxy/haproxy.cfg
+global
+
+        maxconn 10000
+        log     127.0.0.1 local2
+
+defaults
+        log global
+        mode tcp
+        retries 2
+        timeout client 30m
+        timeout connect 4s
+        timeout server 30m
+        timeout check 5s
+
+listen stats
+    mode http
+    bind *:7000
+    stats enable
+    stats uri /
+
+listen postgres
+    bind *:7432
+    option httpchk
+    http-check expect status 200
+    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+    server node1 192.168.0.24:6432 maxconn 10000 check port 8008
+    server node2 192.168.0.25:6432 maxconn 100 check port 8008
+    server node3 192.168.0.26:6432 maxconn 100 check port 8008
+```
+
+pghaproxy1: Перезагрузка HAProxy:
+>sudo systemctl restart haproxy
+
+pghaproxy1: Проверка работоспособности
+>sudo systemctl status haproxy
+![image](https://github.com/user-attachments/assets/a10dddef-57cb-4175-940e-019aa8850181)
+
+
+
+Проверки подключения к HAProxy по порту 7432
+![image](https://github.com/user-attachments/assets/2da98e66-2ebf-4a91-9c5c-fd26c0eb66a3)
+Успешно подключился с локальной Win машины
 
 ## (4) Проверьте отказоустойчивость кластера, имитируя сбой на одном из узлов.
 
