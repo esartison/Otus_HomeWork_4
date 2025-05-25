@@ -54,8 +54,10 @@ pgnode1:смена пароля для схемы postgres и создание �
 
 >create user pgbouncer login encrypted password 'pgbouncer';
 
-pgnode[1-3]: правка pg_hba.conf, чтобы разрешить удаленные подключения 
-
+pgnode[1-3]: правка pg_hba.conf и postgresql.conf, чтобы разрешить удаленные подключения 
+![image](https://github.com/user-attachments/assets/8c17094f-5994-4fa4-877f-6387d7432e61)
+![image](https://github.com/user-attachments/assets/5ccbba28-b840-4339-90d0-e4192ad4e83d)
+>esartison@pgnode3:~$ sudo systemctl restart postgresql
 
 
 ## (3) Настройте HAProxy для балансировки нагрузки.
