@@ -111,8 +111,69 @@ ETCD_ENABLE_V2="true"
 ```
 
 pgnode2: правка /etc/etcd/etcd.conf
+```
+root@pgnode2:/tmp# cat /etc/etcd/etcd.conf
+ETCD_NAME="etcd2"
+ETCD_LISTEN_CLIENT_URLS="http://192.168.0.25:2379,http://127.0.0.1:2379"
+ETCD_ADVERTISE_CLIENT_URLS="http://192.168.0.25:2379"
+ETCD_LISTEN_PEER_URLS="http://192.168.0.25:2380"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://192.168.0.25:2380"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-postgres-cluster"
+ETCD_INITIAL_CLUSTER="etcd1=http://192.168.0.24:2380,etcd2=http://192.168.0.25:2380,etcd3=http://192.168.0.26:2380"
+ETCD_INITIAL_CLUSTER_STATE="new"
+ETCD_DATA_DIR="/var/lib/etcd"
+ETCD_ELECTION_TIMEOUT="10000"
+ETCD_HEARTBEAT_INTERVAL="2000"
+ETCD_INITIAL_ELECTION_TICK_ADVANCE="false"
+ETCD_ENABLE_V2="true"
+```
 
 pgnode3: правка /etc/etcd/etcd.conf
+```
+root@pgnode3:/tmp# cat /etc/etcd/etcd.conf
+ETCD_NAME="etcd3"
+ETCD_LISTEN_CLIENT_URLS="http://192.168.0.26:2379,http://127.0.0.1:2379"
+ETCD_ADVERTISE_CLIENT_URLS="http://192.168.0.26:2379"
+ETCD_LISTEN_PEER_URLS="http://192.168.0.26:2380"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://192.168.0.26:2380"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-postgres-cluster"
+ETCD_INITIAL_CLUSTER="etcd1=http://192.168.0.24:2380,etcd2=http://192.168.0.25:2380,etcd3=http://192.168.0.26:2380"
+ETCD_INITIAL_CLUSTER_STATE="new"
+ETCD_DATA_DIR="/var/lib/etcd"
+ETCD_ELECTION_TIMEOUT="10000"
+ETCD_HEARTBEAT_INTERVAL="2000"
+ETCD_INITIAL_ELECTION_TICK_ADVANCE="false"
+ETCD_ENABLE_V2="true"
+```
+
+pgnode[1-3]: правка /etc/systemd/system/etcd.service
+```
+root@pgnode3:/tmp# cat  /etc/systemd/system/etcd.service
+[Unit]
+Description=Etcd Server
+Documentation=https://github.com/etcd-io/etcd
+After=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=etcd
+Type=notify
+#WorkingDirectory=/var/lib/etcd/
+WorkingDirectory=/opt/etcd/
+EnvironmentFile=-/etc/etcd/etcd.conf
+User=etcd
+# set GOMAXPROCS to number of processors
+ExecStart=/bin/bash -c "GOMAXPROCS=$(nproc) /usr/local/bin/etcd"
+Restart=on-failure
+LimitNOFILE=65536
+IOSchedulingClass=realtime
+IOSchedulingPriority=0
+Nice=-20
+
+[Install]
+WantedBy=multi-user.target
+```
 
 
 
