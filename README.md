@@ -198,12 +198,12 @@ WantedBy=multi-user.target
 ## (2.3) установка\настройка Patroni
 
 pgnode[1-3]: Устанавка Python пакетов
-sudo apt -y install python3 python3-pip python3-dev python3-psycopg2 libpq-dev
-sudo apt install patroni
-pip3 install psycopg2 --break-system-packages
-pip3 install psycopg2-binary --break-system-packages
-pip3 install patroni --break-system-packages
-pip3 install python-etcd --break-system-packages
+>sudo apt -y install python3 python3-pip python3-dev python3-psycopg2 libpq-dev
+>sudo apt install patroni
+>pip3 install psycopg2 --break-system-packages
+>pip3 install psycopg2-binary --break-system-packages
+>pip3 install patroni --break-system-packages
+>pip3 install python-etcd --break-system-packages
 
 pgnode1: Создание конфига Patroni /etc/patroni/patroni.yml
 >mkdir /etc/patroni/
