@@ -74,15 +74,20 @@ pgnode[1-3]:Установка дистрибутива из под ROOT-а
 
 
 pgnode[1-3]: Создание пользователя, настройка директорий и прав
-sudo groupadd --system etcd
-sudo useradd -s /sbin/nologin --system -g etcd etcd
+> sudo groupadd --system etcd
+
+> sudo useradd -s /sbin/nologin --system -g etcd etcd
 
 Создаем каталоги etcd, меняем владельца и права:
-mkdir /opt/etcd
-mkdir /etc/etcd
-mkdir /var/lib/etcd
-chown -R etcd:etcd /opt/etcd /var/lib/etcd /etc/etcd
-chmod -R 700 /opt/etcd/ /var/lib/etcd /etc/etcd
+>mkdir /opt/etcd
+
+>mkdir /etc/etcd
+
+>mkdir /var/lib/etcd
+
+>chown -R etcd:etcd /opt/etcd /var/lib/etcd /etc/etcd
+
+>chmod -R 700 /opt/etcd/ /var/lib/etcd /etc/etcd
 
 
 ## (3) Настройте HAProxy для балансировки нагрузки.
