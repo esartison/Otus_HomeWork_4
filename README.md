@@ -741,6 +741,7 @@ WantedBy=multi-user.target
 
 Просмотреть состояние кластера можно командой
 >patronictl -c /etc/patroni/patroni.yml list
+
 ![image](https://github.com/user-attachments/assets/5923d840-1974-4c39-adba-7216bb25c29e)
 
 ## (2.4) установка\настройка PgBouncer
