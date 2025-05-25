@@ -90,6 +90,29 @@ pgnode[1-3]: Создание пользователя, настройка ди�
 >chmod -R 700 /opt/etcd/ /var/lib/etcd /etc/etcd
 
 
+pgnode1: правка /etc/etcd/etcd.conf
+
+root@pgnode1:/tmp# cat /etc/etcd/etcd.conf
+>ETCD_NAME="etcd1"
+>ETCD_LISTEN_CLIENT_URLS="http://192.168.0.24:2379,http://127.0.0.1:2379"
+>ETCD_ADVERTISE_CLIENT_URLS="http://192.168.0.24:2379"
+>ETCD_LISTEN_PEER_URLS="http://192.168.0.24:2380"
+>ETCD_INITIAL_ADVERTISE_PEER_URLS="http://192.168.0.24:2380"
+>ETCD_INITIAL_CLUSTER_TOKEN="etcd-postgres-cluster"
+>ETCD_INITIAL_CLUSTER="etcd1=http://192.168.0.24:2380,etcd2=http://192.168.0.25:2380,etcd3=http://192.168.0.26:2380"
+>ETCD_INITIAL_CLUSTER_STATE="new"
+>ETCD_DATA_DIR="/var/lib/etcd"
+>ETCD_ELECTION_TIMEOUT="10000"
+>ETCD_HEARTBEAT_INTERVAL="2000"
+>ETCD_INITIAL_ELECTION_TICK_ADVANCE="false"
+>ETCD_ENABLE_V2="true"
+
+pgnode2: правка /etc/etcd/etcd.conf
+
+pgnode3: правка /etc/etcd/etcd.conf
+
+
+
 ## (3) Настройте HAProxy для балансировки нагрузки.
 
 ## (4) Проверьте отказоустойчивость кластера, имитируя сбой на одном из узлов.
