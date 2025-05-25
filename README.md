@@ -699,6 +699,52 @@ pgnode2:Валидация установки
 pgnode3:Валидация установки
 ![image](https://github.com/user-attachments/assets/c64ade65-d4b7-438a-bcb0-57b64a37fc68)
 
+pgnode[1-3]: добавить службу Patroni в автозапуск
+```
+root@pgnode1:/tmp# cat /etc/systemd/system/patroni.service
+[Unit]
+Description=High availability PostgreSQL Cluster
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=postgres
+Group=postgres
+
+# Read in configuration file if it exists, otherwise proceed
+EnvironmentFile=-/etc/patroni_env.conf
+
+# Start the patroni process
+ExecStart=/usr/bin/patroni /etc/patroni/patroni.yml
+
+# Send HUP to reload from patroni.yml
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# only kill the patroni process, not it's children, so it will gracefully stop postgres
+KillMode=process
+
+# Give a reasonable amount of time for the server to start up/shut down
+TimeoutSec=60
+
+# Do not restart the service if it crashes, we want to manually inspect database on failure
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
+```
+>systemctl daemon-reload
+>systemctl enable patroni
+>systemctl start patroni
+>systemctl status patroni
+![image](https://github.com/user-attachments/assets/c4200e03-f9f3-4c1e-a623-4f576192775a)
+
+
+Просмотреть состояние кластера можно командой
+>patronictl -c /etc/patroni/patroni.yml list
+![image](https://github.com/user-attachments/assets/5923d840-1974-4c39-adba-7216bb25c29e)
+
+Для failover:
+patronictl -c /etc/patroni/patroni.yml failover
 
 
 ## (3) Настройте HAProxy для балансировки нагрузки.
