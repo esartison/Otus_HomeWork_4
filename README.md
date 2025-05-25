@@ -189,6 +189,46 @@ WantedBy=multi-user.target
 
 ## (2.3) установка\настройка Patroni
 
+pgnode[1-3]: Устанавка Python пакетов
+sudo apt -y install python3 python3-pip python3-dev python3-psycopg2 libpq-dev
+pip3 install psycopg2 --break-system-packages
+pip3 install psycopg2-binary --break-system-packages
+pip3 install patroni --break-system-packages
+pip3 install python-etcd --break-system-packages
+
+pgnode1: Создание конфига Patroni /etc/patroni/patroni.yml
+>mkdir /etc/patroni/
+```
+
+```
+
+pgnode2: Создание конфига Patroni /etc/patroni/patroni.yml
+>mkdir /etc/patroni/
+```
+
+```
+
+pgnode3: Создание конфига Patroni /etc/patroni/patroni.yml
+>mkdir /etc/patroni/
+```
+
+```
+
+pgnode[1-3]:Назначение прав каждой ноде
+>chown postgres:postgres -R /etc/patroni
+
+>chmod 700 /etc/patroni
+
+>mkdir /var/lib/pgsql_stats_tmp
+
+>chown postgres:postgres /var/lib/pgsql_stats_tmp
+
+
+Валидация установки
+sudo -u postgres patroni /etc/patroni/patroni.yml
+
+
+
 ## (3) Настройте HAProxy для балансировки нагрузки.
 
 ## (4) Проверьте отказоустойчивость кластера, имитируя сбой на одном из узлов.
