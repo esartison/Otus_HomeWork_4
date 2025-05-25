@@ -37,6 +37,19 @@ IP адреса для созданных VM
 
 ## (2) Разверните HA-кластер PostgreSQL с использованием Patroni.
 
+pgnode[1-3]:регистраация репозитория postgresql.org
+>sudo apt install -y postgresql-common
+>sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+
+pgnode[1-3]:установка Postgres 17
+>sudo
+>apt install postgresql-17
+
+
+pgnode1:смена пароля для схемы postgres и создание пользователей postgres и pgbouncer 
+
+
+
 ## (3) Настройте HAProxy для балансировки нагрузки.
 
 ## (4) Проверьте отказоустойчивость кластера, имитируя сбой на одном из узлов.
