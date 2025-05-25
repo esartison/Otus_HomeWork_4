@@ -181,6 +181,7 @@ WantedBy=multi-user.target
 >systemctl start etcd
 >systemctl status etcd
 ![image](https://github.com/user-attachments/assets/6f40dd85-85ac-43d9-a139-2880840e6d06)
+
 >etcdctl endpoint health --cluster -w table
 ![image](https://github.com/user-attachments/assets/7503db04-7f8a-40b7-9931-ea22ec5adc6d)
 
