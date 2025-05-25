@@ -754,7 +754,7 @@ WantedBy=multi-user.target
 Все отработало как и ожидали
 
 ## (2.4) установка\настройка PgBouncer
-pgnode[1-3]: Устанавка PGBouncer
+pgnode[1-3]: Установка PGBouncer
 >apt -y install pgbouncer
 
 
@@ -810,7 +810,7 @@ root@pgnode3:/tmp# cat /etc/pgbouncer/userlist.txt
 ![image](https://github.com/user-attachments/assets/b8f50046-d4ea-4982-8cb7-1dc754da908b)
 Сервис работоспособен
 
-Проверка подключенич к Postgres через PGBouncer (порт 6432):
+Проверка подключения к Postgres через PGBouncer (порт 6432):
 >psql -p 6432 -h 127.0.0.1 -U postgres postgres
 
 ![image](https://github.com/user-attachments/assets/eaeb4bbf-e302-4104-a933-87d828375a87)
@@ -818,7 +818,7 @@ root@pgnode3:/tmp# cat /etc/pgbouncer/userlist.txt
 
 
 ## (3) Настройте HAProxy для балансировки нагрузки.
-pghaproxy1: Устанавливаем HAProxy:
+pghaproxy1: Устанавливка HAProxy:
 >apt -y install haproxy
 делаем только на выделенной машине pghaproxy1
 
@@ -864,7 +864,7 @@ pghaproxy1: Проверка работоспособности
 Сервис рабочий
 
 
-Проверки подключения к HAProxy по порту 7432
+Проверка подключения к HAProxy по порту 7432
 ![image](https://github.com/user-attachments/assets/2da98e66-2ebf-4a91-9c5c-fd26c0eb66a3)
 Успешно подключился с локальной Win машины
 
