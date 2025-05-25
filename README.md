@@ -878,7 +878,39 @@ pg_probackup не поддерживается для 17й версии Postgres
 ![image](https://github.com/user-attachments/assets/5b15856b-afb8-442d-84bc-e91bd8b43b8f)
 ![image](https://github.com/user-attachments/assets/564cf8f4-5985-406e-b73c-cebc6f2e9bb3)
 
-Нужно тогда настраивать WAL-G
+Нужно тогда настраивать WAL-G.
+
+Установка
+>curl -L "https://github.com/wal-g/wal-g/releases/download/v3.0.7/wal-g-pg-ubuntu-20.04-amd64.tar.gz" -o "wal-g.linux-amd64.tar.gz"
+>tar -xzf wal-g.linux-amd64.tar.gz
+>mv wal-g-pg-ubuntu-20.04-aarch64 /usr/local/bin/wal-g
+
+
+Подготовка .walg.json файла
+{
+    "WALG_COMPRESSION_METHOD": "brotli",
+    "WALG_DELTA_MAX_STEPS": "5",
+    "WALG_FILE_PREFIX": "/backup",
+    "PGDATA": "/var/lib/postgresql/17/main",
+    "PGHOST": "/var/run/postgresql/.s.PGSQL.5432"
+}
+
+Подгтовка параметров
+```
+echo "wal_level=replica" >> /etc/postgresql/17/main/postgresql.conf
+echo "archive_mode=on" >> /etc/postgresql/17/main/postgresql.conf
+echo "archive_command='/usr/local/bin/wal-g wal-push \"%p\" >> /var/log/postgresql/archive_command.log 2>&1' " >> /etc/postgresql/17/main/postgresql.conf
+echo "archive_timeout=60" >> /etc/postgresql/17/main/postgresql.conf
+echo "restore_command='/usr/local/bin/wal-g wal-fetch \"%f\" \"%p\" >> /var/log/postgresql/restore_command.log 2>&1' " >> /etc/postgresql/17/main/postgresql.conf
+
+killall -s HUP postgres
+```
+
+Запуска бэкапа
+>  /usr/local/bin/wal-g backup-push /var/lib/postgresql/17/main
+
+Не хватило времени на более сложные вещи..
+
 
 
 
