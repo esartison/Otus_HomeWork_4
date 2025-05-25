@@ -863,3 +863,19 @@ pghaproxy1: Проверка работоспособности
 ## (4) Проверьте отказоустойчивость кластера, имитируя сбой на одном из узлов.
 
 ## (5) Дополнительно: Настройте бэкапы с использованием WAL-G или pg_probackup.
+
+создание файлового хранилища для хранения бэкапов в YC 
+![image](https://github.com/user-attachments/assets/b9705fbf-bdf2-45d2-8435-a2e5badbd598)
+
+pgnodeх[1-3]: Создание директории для бэкапов
+ >mkdir /backup
+ >sudo mount -t virtiofs pgbackup /backup
+ >chown postgres:postgres /backup
+![image](https://github.com/user-attachments/assets/42c6dbd2-d959-490d-9b09-82e665530147)
+Примонтировал диск на все 3 ноды
+
+
+
+
+
+
