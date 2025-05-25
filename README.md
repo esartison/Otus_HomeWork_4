@@ -802,6 +802,7 @@ root@pgnode3:/tmp# cat /etc/pgbouncer/userlist.txt
 
 Проверка подключенич к Postgres через PGBouncer (порт 6432):
 >psql -p 6432 -h 127.0.0.1 -U postgres postgres
+
 ![image](https://github.com/user-attachments/assets/eaeb4bbf-e302-4104-a933-87d828375a87)
 
 
