@@ -743,6 +743,7 @@ WantedBy=multi-user.target
 >patronictl -c /etc/patroni/patroni.yml list
 
 ![image](https://github.com/user-attachments/assets/5923d840-1974-4c39-adba-7216bb25c29e)
+
 Все отработало как и ожидали
 
 ## (2.4) установка\настройка PgBouncer
@@ -861,6 +862,20 @@ pghaproxy1: Проверка работоспособности
 Успешно подключился с локальной Win машины
 
 ## (4) Проверьте отказоустойчивость кластера, имитируя сбой на одном из узлов.
+
+проверка текущей конфигурации
+>patronictl -c /etc/patroni/patroni.yml list
+
+![image](https://github.com/user-attachments/assets/55e76b71-7a92-4b61-895e-7e6b8f4363e9)
+
+
+принудительно остановил первую ноду
+![image](https://github.com/user-attachments/assets/f000d117-4db0-40ad-ab41-221b982b9fa8)
+
+Лидер переключился на третью ноду
+![image](https://github.com/user-attachments/assets/2bb8b8af-111c-483b-90e4-6ffc480fa446)
+
+Все отработало!
 
 ## (5) Дополнительно: Настройте бэкапы с использованием WAL-G или pg_probackup.
 
