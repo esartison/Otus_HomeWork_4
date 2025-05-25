@@ -68,13 +68,15 @@ pgnode[2,3]: удаление содержимое каталога pgdata на 
 
 pgnode[1-3]:Установка дистрибутива из под ROOT-а
 >cd /tmp && wget https://github.com/etcd-io/etcd/releases/download/v3.5.5/etcd-v3.5.5-linux-amd64.tar.gz && tar xzvf etcd-v3.5.5-linux-amd64.tar.gz
+
 >sudo mv /tmp/etcd-v3.5.5-linux-amd64/etcd* /usr/local/bin/
 
 
 
-Создаем пользователя, от которого будет работать служба etcd:
+pgnode[1-3]: Создание пользователя, настройка директорий и прав
 sudo groupadd --system etcd
 sudo useradd -s /sbin/nologin --system -g etcd etcd
+
 Создаем каталоги etcd, меняем владельца и права:
 mkdir /opt/etcd
 mkdir /etc/etcd
