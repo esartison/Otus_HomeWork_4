@@ -910,7 +910,7 @@ pg_probackup не поддерживается для 17й версии Postgres
     "PGHOST": "/var/run/postgresql/.s.PGSQL.5432"
 }
 
-Подгтовка параметров
+Подготовка параметров
 ```
 echo "wal_level=replica" >> /etc/postgresql/17/main/postgresql.conf
 echo "archive_mode=on" >> /etc/postgresql/17/main/postgresql.conf
@@ -921,7 +921,7 @@ echo "restore_command='/usr/local/bin/wal-g wal-fetch \"%f\" \"%p\" >> /var/log/
 killall -s HUP postgres
 ```
 
-Запуска бэкапа
+Запуск бэкапа
 >  /usr/local/bin/wal-g backup-push /var/lib/postgresql/17/main
 
 Не хватило времени на более сложные вещи..
