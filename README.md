@@ -874,8 +874,11 @@ pgnodeх[1-3]: Создание директории для бэкапов
 ![image](https://github.com/user-attachments/assets/42c6dbd2-d959-490d-9b09-82e665530147)
 Примонтировал диск на все 3 ноды
 
+pg_probackup не поддерживается для 17й версии Postgres
+![image](https://github.com/user-attachments/assets/5b15856b-afb8-442d-84bc-e91bd8b43b8f)
+![image](https://github.com/user-attachments/assets/564cf8f4-5985-406e-b73c-cebc6f2e9bb3)
 
-
+Нужно тогда настраивать WAL-G
 
 
 
