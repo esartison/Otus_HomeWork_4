@@ -743,6 +743,7 @@ WantedBy=multi-user.target
 >patronictl -c /etc/patroni/patroni.yml list
 
 ![image](https://github.com/user-attachments/assets/5923d840-1974-4c39-adba-7216bb25c29e)
+Все отработало как и ожидали
 
 ## (2.4) установка\настройка PgBouncer
 pgnode[1-3]: Устанавка PGBouncer
@@ -799,18 +800,19 @@ root@pgnode3:/tmp# cat /etc/pgbouncer/userlist.txt
 >systemctl restart pgbouncer
 
 ![image](https://github.com/user-attachments/assets/b8f50046-d4ea-4982-8cb7-1dc754da908b)
-
+Сервис работоспособен
 
 Проверка подключенич к Postgres через PGBouncer (порт 6432):
 >psql -p 6432 -h 127.0.0.1 -U postgres postgres
 
 ![image](https://github.com/user-attachments/assets/eaeb4bbf-e302-4104-a933-87d828375a87)
-
+Все прошло успешно
 
 
 ## (3) Настройте HAProxy для балансировки нагрузки.
 pghaproxy1: Устанавливаем HAProxy:
 >apt -y install haproxy
+делаем только на выделенной машине pghaproxy1
 
 pghaproxy1: Создание нового файла конфигурации  /etc/haproxy/haproxy.cfg
 ```
@@ -851,7 +853,7 @@ pghaproxy1: Перезагрузка HAProxy:
 pghaproxy1: Проверка работоспособности
 >sudo systemctl status haproxy
 ![image](https://github.com/user-attachments/assets/a10dddef-57cb-4175-940e-019aa8850181)
-
+Сервис рабочий
 
 
 Проверки подключения к HAProxy по порту 7432
