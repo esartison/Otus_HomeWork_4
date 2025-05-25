@@ -797,6 +797,7 @@ root@pgnode3:/tmp# cat /etc/pgbouncer/userlist.txt
 
 Перезапуск PGBouncer
 >systemctl restart pgbouncer
+
 ![image](https://github.com/user-attachments/assets/b8f50046-d4ea-4982-8cb7-1dc754da908b)
 
 
